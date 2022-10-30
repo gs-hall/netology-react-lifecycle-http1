@@ -1,23 +1,53 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from "react";
+import ClockForm from "./Components/ClockForm";
+import Clocks from "./Components/Clocks";
+import "./main.css";
+import moment from "moment-timezone";
+
+
+function getTime(timeZone) {
+  return moment(new Date()).utcOffset(timeZone*60).format('HH:mm:ss');
+}
 
 function App() {
+  const [clockForm, setClockForm] = useState({clockName: 'a', timeZone: 3});
+  const [clocks, setClocks] = useState([]);
+
+  useEffect(() => {
+    if (clocks.length === 0) return;
+    console.log(`initializing interval`);
+    const interval = setInterval(() => {
+      const newClocks = clocks.map((clock) => ({...clock, time: getTime(clock.timeZone)}));
+      console.log(newClocks);
+      setClocks(newClocks);
+      }, 1000);
+
+    return () => {
+      console.log(`clearing interval`);
+      clearInterval(interval);
+    };
+    }, [clocks]);
+
+  const handleFormChange = (e) => {
+    const {name, value} = e.target;
+    setClockForm(prevForm => ({...prevForm, [name]: value}));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const newClock = {
+      clockName: clockForm.clockName,
+      timeZone: clockForm.timeZone,
+      time: getTime(clockForm.timeZone)
+    };
+    setClocks([...clocks, newClock]);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="main-container">
+      <ClockForm form={clockForm} onChange={handleFormChange} onSubmit={handleSubmit} />
+      <Clocks clocks={clocks}/>
     </div>
   );
 }
